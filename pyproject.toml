@@ -31,6 +31,10 @@ override-dependencies = ["dlib ; sys_platform == 'never'"]
 face-recognition = { git = "https://github.com/ageitgey/face_recognition.git" }
 face-recognition-models = { git = "https://github.com/ageitgey/face_recognition_models.git" }
 
+[server]
+runOnSave = true
+fileWatcherType = "auto"
+
 [project.scripts]
 ai-attendence-system = "ai_attendence_system:main"
 

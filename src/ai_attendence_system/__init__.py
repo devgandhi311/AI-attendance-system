@@ -1,2 +1,2 @@
-def main() -> None:
-    print("Hello from ai-attendence-system!")
+def main():
+    print("AI Attendance System")
