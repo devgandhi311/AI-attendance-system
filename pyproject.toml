@@ -1,13 +1,35 @@
 [project]
 name = "ai-attendence-system"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI Attendance System using face recognition"
 readme = "README.md"
 authors = [
     { name = "devgandhi311", email = "devgandhi311@gmail.com" }
 ]
-requires-python = ">=3.11"
-dependencies = []
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "dlib-bin",
+    "setuptools<70.0.0",
+    "face-recognition",
+    "face-recognition-models",
+    "supabase",
+    "bcrypt",
+    "segno",
+    "pillow",
+    "streamlit"
+]
+
+[tool.uv]
+# face-recognition depends on "dlib" (which needs a C++ build). dlib-bin ships
+# the same module prebuilt, so we tell uv to never install plain "dlib".
+override-dependencies = ["dlib ; sys_platform == 'never'"]
+
+[tool.uv.sources]
+face-recognition = { git = "https://github.com/ageitgey/face_recognition.git" }
+face-recognition-models = { git = "https://github.com/ageitgey/face_recognition_models.git" }
 
 [project.scripts]
 ai-attendence-system = "ai_attendence_system:main"
