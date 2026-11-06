@@ -110,10 +110,23 @@ html, body, [class*="css"], .stApp {
 }
 @media (min-width: 700px) { .card-desc { min-height: 78px; } }
 
-/* ---------- Centered buttons inside cards ---------- */
-.st-key-teacher_card .stButton, .st-key-student_card .stButton {
-    display: flex; justify-content: center; padding: 0 16px;
+/* ---------- Force center buttons inside cards ---------- */
+
+.st-key-student_card .stButton,
+.st-key-teacher_card .stButton {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
 }
+
+.st-key-student_card .stButton button,
+.st-key-teacher_card .stButton button {
+    width: 240px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
 .st-key-teacher_card .stButton > button,
 .st-key-student_card .stButton > button {
     min-width: min(240px, 100%); width: auto;
@@ -172,6 +185,6 @@ def render_card_top(role: str):
 
 def render_footer():
     st.markdown(
-        '<div class="footer-note">© Smart Class Attendance · Powered by DEV SHREY</div>',
+        '<div class="footer-note">© Smart Class Attendance · Powered by Me </div>',
         unsafe_allow_html=True,
     )
