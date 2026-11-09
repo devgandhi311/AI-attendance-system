@@ -40,8 +40,8 @@ def login_layout():
         }
     
         .stTextInput input {
-            background: #f1f5f9 !important;
-            color: #0f172a !important;
+            # background: #f1f5f9 !important;
+            color: #ffffff !important;
             border: 1px solid #cbd5e1 !important;
             border-radius: 10px !important;
         }

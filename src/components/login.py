@@ -1,7 +1,8 @@
 import streamlit as st
 import re
 from src.ui.login_layout import login_layout
-from src.components.signup import signup
+from src.database.db import teacher_login
+
 
 
 def login():
@@ -35,7 +36,16 @@ def login():
 
             else:
                 st.success("Login details submitted successfully!")
-                st.session_state["isLogin"] = True
+
+                if teacher_login(username, password):
+                    st.toast("Welcome back.")
+                    import time
+                    time.sleep(2)
+                    st.session_state["isLogin"] = True
+                    st.rerun()
+                else:
+                    st.error("Invalid username or password")
+
                 # Add database authentication here.
                 # Do not authenticate using form validation alone.
 
