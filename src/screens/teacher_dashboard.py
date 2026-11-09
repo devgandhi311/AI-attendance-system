@@ -1,8 +1,10 @@
 import streamlit as st
 from src.components.signup import signup
 from src.components.login import login
+from src.components.header import header
 
 def teacher_dashboard():    
+    header()
     if st.session_state["isLogin"]!=True:
         if (st.session_state["page"]!="register"):
             login()
@@ -10,4 +12,4 @@ def teacher_dashboard():
             signup()
     else:
         st.title("Teacher Dashboard")
-        st.write("Welcome to the teacher dashboard!")
+        st.write(f"Welcome {st.session_state['teacher_data'].get('username')}")

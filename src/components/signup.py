@@ -18,7 +18,6 @@ def register_teacher(username, name, pwd, confirm_pass):
         return False, st.exception(e)
     
 def signup():
-
     signup_layout()    
 
     with st.form("signup_form"):
@@ -61,8 +60,6 @@ def signup():
             ]):
                 st.error("Please fill in all fields.")
 
-            elif len(password) < 8:
-                st.error("Password must contain at least 8 characters.")
 
             elif password != confirm_password:
                 st.error("Passwords do not match.")
@@ -75,6 +72,7 @@ def signup():
                     st.success(message)
                     import time
                     time.sleep(2)
+                    st.session_state["teacher_data"] = {"name": name, "username": username, "password": password}
                     st.session_state["isLogin"] = True
                     st.rerun()
                 else:

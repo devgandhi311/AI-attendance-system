@@ -5,8 +5,10 @@ from ui.home_layout import (
     render_card_top,
     render_footer,
 )
+from src.components.header import header
 
 def home():
+    header()
     style_home_layout()
     render_header()
 

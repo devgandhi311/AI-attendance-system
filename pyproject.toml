@@ -19,13 +19,16 @@ dependencies = [
     "bcrypt",
     "segno",
     "pillow",
-    "streamlit"
+    "streamlit",
+    "librosa",
+    "resemblyzer",
+    "webrtcvad-wheels"
 ]
 
 [tool.uv]
 # face-recognition depends on "dlib" (which needs a C++ build). dlib-bin ships
 # the same module prebuilt, so we tell uv to never install plain "dlib".
-override-dependencies = ["dlib ; sys_platform == 'never'"]
+override-dependencies = ["dlib ; sys_platform == 'never'", "webrtcvad ; sys_platform == 'never'"]
 
 [tool.uv.sources]
 face-recognition = { git = "https://github.com/ageitgey/face_recognition.git" }

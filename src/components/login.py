@@ -4,9 +4,7 @@ from src.ui.login_layout import login_layout
 from src.database.db import teacher_login
 
 
-
 def login():
-
     login_layout()
 
     with st.form("login_form"):
@@ -42,12 +40,11 @@ def login():
                     import time
                     time.sleep(2)
                     st.session_state["isLogin"] = True
+                    st.session_state["teacher_data"] = {"username": username, "password": password}
                     st.rerun()
                 else:
                     st.error("Invalid username or password")
 
-                # Add database authentication here.
-                # Do not authenticate using form validation alone.
 
     st.markdown(
         "<p style='text-align:center;color:#666;'>"
