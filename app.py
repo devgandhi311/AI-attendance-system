@@ -6,6 +6,8 @@ from src.screens.home import home
 
 
 def main():
+    if "student_data" not in st.session_state:
+        st.session_state["student_data"] = None
     if "teacher_data" not in st.session_state:
         st.session_state["teacher_data"] = None
     if "login_type" not in st.session_state:
