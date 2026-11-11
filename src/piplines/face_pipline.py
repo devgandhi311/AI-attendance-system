@@ -54,29 +54,35 @@ def get_trained_model():
 
     for student in student_db:
         embedding = student.get("face_embedding")
+        student_id = student.get("student_id")
 
-        if embedding:
-            X.append(np.array(embedding))
-            y.append(student.get("student_id"))
+        if embedding is not None and student_id is not None:
+            embedding = np.asarray(embedding, dtype=np.float64)
 
+            if embedding.shape == (128,):
+                X.append(embedding)
+                y.append(student_id)
 
     if len(X)==0:
-        return 0
+        return None
+
+    if len(set(y))<2:
+        return None
 
     clf = SVC(kernel="linear", probability=True, class_weight="balanced")
 
     try:
         clf.fit(X,y)
     except ValueError:
-        pass
+        st.error("error in model training.")
 
-    return {"clf": clf, "X": X, "y": y}
+    return {"clf": clf, "X": np.array(X), "y": np.array(y)}
 
 
 def train_classifier():
     st.cache_resource.clear()
     model_data = get_trained_model()
-    return bool(model_data)
+    return model_data is not None
 
 
 def predict_attendance(class_image_np):
@@ -84,27 +90,38 @@ def predict_attendance(class_image_np):
 
     detected_student={}
 
+    num_faces=len(encodings)
+
+    if num_faces==0:
+        return {}, [], 0
+
     model_data = get_trained_model()
 
-    if not model_data:
+    if model_data is None:
         return {}, [], 0
 
     clf = model_data['clf']
     X_train = model_data["X"]
     y_train = model_data["y"]
 
-    all_students = sorted(list(set(y_train)))
+    all_students = list(set(y_train))
 
     for encoding in encodings:
-        if len(all_students)>=2:
-            predicted_id = int(clf.predict([encoding])[0])
-        else:
-            predicted_id = int(all_students[0])
+        
+        predicted_id = clf.predict([encoding])[0]
+        student_indices = [
+            i for i, sid in enumerate(y_train)
+            if sid == predicted_id
+        ]
 
+        student_embeddings = X_train[student_indices]
 
-        student_embedding = X_train.index(predicted_id)
+        distances = np.linalg.norm(
+            student_embeddings - encoding,
+            axis=1
+        )
 
-        best_match_score = np.lin.norm(student_embedding - encoding)
+        best_match_score = np.min(distances)
 
         resemblance_threshold = 0.6
 
@@ -112,4 +129,4 @@ def predict_attendance(class_image_np):
             detected_student[predicted_id] =True
 
 
-    return detected_student, all_students, len(detected_student)
+    return detected_student, all_students, num_faces
