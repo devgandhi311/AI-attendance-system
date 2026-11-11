@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
+import time
 from src.components.header import header
 from src.piplines.face_pipline import predict_attendance, get_face_embeddings, train_classifier
 from src.database.db import get_all_students, create_student
@@ -13,63 +14,69 @@ def student_dashboard():
     header()
 
     if not st.session_state.get("sLogin", False):
+        photo_source = st.camera_input("Center your face")
 
         if st.session_state["show_registration"]:
                 with st.container(border=True):
-                    st.header("register new profile")
-                    new_name = st.text_input("Enter your name", placeholder='E.g Shrey Marakana')
-        
-                    st.subheader("optional: voice enrillment")
-                    st.info("Enroll your for voice only attendance")
-        
-        
-                    audi_data=None
-        
-                    try:
-                        audio_data=st.audio_input("Record a short phrase like I am present, My name is shrey yes sir yes madam.")
-                    except Exception as e:
-                        st.error("Audio data failed!")
-        
-                    if st.button("Create Account", type="primary"):
-                        if new_name:
-                            with st.spinner("Creating profile..."):
-                                img = np.array(Image.open(photo_source))
-        
-                                encodings = get_face_embeddings(img)
-        
-                                if encodings:
-                                    face_emb = encodings[0].tolist()
-        
-                                    voice_emb=None
-                                    if audio_data:
-                                        voice_emb = get_voice_embedding(audio_data.read())
-        
-                                    response_data = create_student(new_name, face_emb, voice_emb)
-        
-                                    if response_data:
-                                        train_classifier()
-                                        st.session_state["student_data"] = response_data[0]
-                                        st.session_state["show_registration"] = False
-                                        st.session_state["sLogin"] = False
-                                        st.toast(f"Profile created!  {new_name}")
-        
-                                        time.sleep(2)
-                                        st.rerun()
-                                else:
-                                    st.error("could not capture your facial features for registration")
-        
-                        else:
-                            st.warning("please enter your name")
+                    if photo_source:
+                        img = np.array(Image.open(photo_source).convert("RGB"))
+
+                        st.header("Register New Profile")
+                        new_name = st.text_input(
+                            "Enter your name",
+                            placeholder="E.g Shrey Marakana"
+                        )
+                                
+                        st.subheader("optional: voice enrillment")
+                        st.info("Enroll your for voice only attendance")
+            
+            
+                        audi_data=None
+            
+                        try:
+                            audio_data=st.audio_input("Record a short phrase like I am present, My name is shrey yes sir yes madam.")
+                        except Exception as e:
+                            st.error("Audio data failed!")
+            
+                        if st.button("Create Account", type="primary"):
+                            if new_name:
+                                with st.spinner("Creating profile..."):
+            
+                                    encodings = get_face_embeddings(img)
+            
+                                    if encodings:
+                                        face_emb = encodings[0].tolist()
+            
+                                        voice_emb=None
+                                        if audio_data:
+                                            voice_emb = get_voice_embedding(audio_data.read())
+            
+                                        response_data = create_student(new_name, face_emb, voice_emb)
+            
+                                        if response_data:
+                                            train_classifier()
+                                            st.session_state["student_data"] = response_data[0]
+                                            st.session_state["show_registration"] = False
+                                            st.session_state["sLogin"] = True
+                                            st.toast(f"Profile created!  {new_name}")
+            
+                                            time.sleep(2)
+                                            st.rerun()
+                                    else:
+                                        st.error("could not capture your facial features for registration")
+            
+                            else:
+                                st.warning("please enter your name")
         else:
 
-            photo_source = st.camera_input("Center your face")
+            
         
             if (photo_source):
                 img = np.array(Image.open(photo_source).convert("RGB"))
 
                 with st.spinner("AI is scanning..."):
                     detected, all_ids, num_faces = predict_attendance(img)
-
+                    
                     if num_faces==0:
                         st.warning("Face not found.")
                     elif num_faces>1:
@@ -86,12 +93,11 @@ def student_dashboard():
                                 st.session_state["student_data"] = student
                                 st.session_state["sLogin"] = True
                                 st.toast(f"welcome back {student['name']}")
-                                import time
                                 time.sleep(2)
                                 st.rerun()
-                            else:
-                                st.warning("Student record not found in database.")
                         else:
+                            st.warning("Student record not found in database.")
+                            
                             st.info("Face not recognized! You might be a new student.")
                             st.session_state["show_registration"]=True
                             st.rerun()

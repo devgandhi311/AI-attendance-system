@@ -31,6 +31,7 @@ def get_face_embeddings(image_np):
     detector, sp, facerec = load_dlib_models()
 
     faces = detector(image_np, 1)
+    st.write("Detected faces:", len(faces))
 
     encodings = []
 
@@ -63,11 +64,11 @@ def get_trained_model():
                 X.append(embedding)
                 y.append(student_id)
 
-    if len(X)==0:
+    if len(X)==0 or len(y)==0:
         return None
 
-    if len(set(y))<2:
-        return None
+    if len(set(y))==1:
+        return {"y": np.array(y)}
 
     clf = SVC(kernel="linear", probability=True, class_weight="balanced")
 
@@ -97,8 +98,15 @@ def predict_attendance(class_image_np):
 
     model_data = get_trained_model()
 
+
     if model_data is None:
-        return {}, [], 0
+        # st.warning("SVC model is not trained. Need at least 2 students.")
+        return {}, [], num_faces
+
+    if len(set(model_data["y"]))==1:
+        detected_student[model_data["y"][0]]=True
+        return detected_student, model_data["y"], num_faces
+    
 
     clf = model_data['clf']
     X_train = model_data["X"]
