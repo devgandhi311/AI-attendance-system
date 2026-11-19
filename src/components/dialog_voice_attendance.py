@@ -14,11 +14,13 @@ def voice_attendance_dialog(selected_subject_id):
         "Record audio of students saying I am present. Then AI will recognize the students"
     )
 
-    audio_data = None
-
     audio_data = st.audio_input("Record classroom audio")
 
     if st.button("Analyze Audio", width="stretch", type="primary"):
+        if audio_data is None:
+            st.warning("Please record classroom audio before analyzing")
+            return
+
         with st.spinner("Prcessing Audio data"):
             enrolled_res = (
                 supabase.table("subject_students")
@@ -47,7 +49,7 @@ def voice_attendance_dialog(selected_subject_id):
 
             results, attendance_to_log = [], []
 
-            current_timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            current_timestamp = datetime.now().isoformat(timespec="microseconds")
 
             for node in enrolled_students:
                 student = node["students"]

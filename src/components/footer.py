@@ -7,8 +7,8 @@ def footer_home():
     st.markdown(
         f"""
         <div class="footer-credit">
-        <p>Made with ❤️ by</p>
-        <img src="{logo_url}" alt="Apna College" />
+        <p>Made with ❤️ by Me</p>
+        
         </div>
         """,
         unsafe_allow_html=True,

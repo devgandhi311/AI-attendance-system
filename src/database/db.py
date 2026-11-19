@@ -128,7 +128,7 @@ def create_attendance(logs):
         supabase.table("attendance_logs")
         .upsert(
             logs,
-            on_conflict="subject_id,student_id,attendance_date",
+            on_conflict="subject_id,student_id,timestamp",
         )
         .execute()
     )
