@@ -189,11 +189,9 @@ def teacher_tab_take_attendance():
                     detected, _, _ = predict_attendance(img_np)
 
                     if detected:
-                        for sid in detected.keys():
-                            student_id = int(sid)
-
+                        for student_id, match_score in detected.items():
                             all_detected_ids.setdefault(student_id, []).append(
-                                f"Photo {idx+1}"
+                                (f"Photo {idx+1}", match_score)
                             )
 
                 enrolled_res = (
@@ -216,14 +214,25 @@ def teacher_tab_take_attendance():
 
                     for node in enrolled_students:
                         student = node["students"]
-                        sources = all_detected_ids.get(int(student["student_id"]), [])
-                        is_present = len(sources) > 0
+                        matches = all_detected_ids.get(
+                            int(student["student_id"]),
+                            [],
+                        )
+                        sources = [source for source, _ in matches]
+                        is_present = bool(matches)
+                        match_score = max(
+                            (score for _, score in matches),
+                            default=None,
+                        )
 
                         results.append(
                             {
                                 "Name": student["name"],
                                 "ID": student["student_id"],
                                 "Source": ", ".join(sources) if is_present else "-",
+                                "Face similarity": (
+                                    f"{match_score:.0%}" if match_score is not None else "-"
+                                ),
                                 "Status": "✅ Present" if is_present else "❌ Absent",
                             }
                         )

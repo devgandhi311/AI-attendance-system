@@ -2,9 +2,10 @@ import dlib
 import face_recognition_models
 import numpy as np
 import streamlit as st
-from sklearn.svm import SVC
 
 from src.database.db import get_all_students
+
+RESEMBLANCE_THRESHOLD = 0.6
 
 
 @st.cache_resource
@@ -20,7 +21,16 @@ def load_dlib_models():
     return detector, sp, facerec
 
 
-def get_face_embeddings(image_np):
+def get_face_embeddings(image_np: np.ndarray) -> list[np.ndarray]:
+    """Return face embeddings for an RGB uint8 image."""
+    if (
+        not isinstance(image_np, np.ndarray)
+        or image_np.ndim != 3
+        or image_np.shape[2] != 3
+        or image_np.dtype != np.uint8
+    ):
+        raise ValueError("Expected an RGB uint8 image with three color channels.")
+
     detector, sp, facerec = load_dlib_models()
     faces = detector(image_np, 1)
 
@@ -48,30 +58,36 @@ def get_trained_model():
 
     for student in student_db:
         embedding = student.get("face_embedding")
-        if embedding:
-            X.append(np.array(embedding))
-            y.append(student.get("student_id"))
+        student_id = student.get("student_id")
+        if embedding is None or student_id is None:
+            continue
+
+        embedding = np.asarray(embedding, dtype=np.float64)
+        if embedding.shape != (128,) or not np.isfinite(embedding).all():
+            continue
+
+        try:
+            y.append(int(student_id))
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"Invalid student_id in student record: {student_id!r}"
+            ) from exc
+        X.append(embedding)
 
     if len(X) == 0:
-        return 0
+        return None
 
-    clf = SVC(kernel="linear", probability=True, class_weight="balanced")
-
-    try:
-        clf.fit(X, y)
-    except ValueError:
-        pass
-
-    return {"clf": clf, "X": X, "y": y}
+    return {"X": np.stack(X), "y": np.asarray(y, dtype=np.int64)}
 
 
 def train_classifier():
-    st.cache_resource.clear()
+    get_trained_model.clear()
     model_data = get_trained_model()
     return bool(model_data)
 
 
 def predict_attendance(class_image_np):
+    """Return matched IDs with distance-based similarity scores, not probabilities."""
     encodings = get_face_embeddings(class_image_np)
 
     detected_student = {}
@@ -81,24 +97,26 @@ def predict_attendance(class_image_np):
     if not model_data:
         return detected_student, [], len(encodings)
 
-    clf = model_data["clf"]
     X_train = model_data["X"]
     y_train = model_data["y"]
 
-    all_students = sorted(list(set(y_train)))
+    if len(X_train) == 0:
+        return detected_student, [], len(encodings)
 
+    all_students = sorted(set(y_train.tolist()))
     for encoding in encodings:
-        if len(all_students) >= 2:
-            predicted_id = int(clf.predict([encoding])[0])
-        else:
-            predicted_id = int(all_students[0])
+        distances = np.linalg.norm(X_train - encoding, axis=1)
+        if len(distances) == 0:
+            continue
 
-        student_embedding = X_train[y_train.index(predicted_id)]
+        nearest_index = int(np.argmin(distances))
+        best_match_distance = float(distances[nearest_index])
+        if best_match_distance <= RESEMBLANCE_THRESHOLD:
+            student_id = int(y_train[nearest_index])
+            match_score = 1.0 - best_match_distance / RESEMBLANCE_THRESHOLD
+            detected_student[student_id] = max(
+                detected_student.get(student_id, 0.0),
+                match_score,
+            )
 
-        best_match_score = np.linalg.norm(student_embedding - encoding)
-
-        resemblance_threshold = 0.6
-
-        if best_match_score <= resemblance_threshold:
-            detected_student[predicted_id] = True
     return detected_student, all_students, len(encodings)
